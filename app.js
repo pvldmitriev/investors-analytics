@@ -283,12 +283,19 @@ class InvestorsApp {
 (function() {
     'use strict';
     
+    console.log('=== DEBUG: App initialization module loaded ===');
+    
     // Состояние готовности приложения
     let appReady = false;
     let dependenciesReady = false;
     
     // Проверка готовности зависимостей
     function checkDependencies() {
+        console.log('=== DEBUG: Checking dependencies ===');
+        console.log('loadDataFromRender:', typeof loadDataFromRender);
+        console.log('createInvestorCardRender:', typeof createInvestorCardRender);
+        console.log('investorsData:', typeof investorsData);
+        
         if (typeof loadDataFromRender === 'function' && 
             typeof createInvestorCardRender === 'function' &&
             typeof investorsData !== 'undefined') {
