@@ -102,6 +102,19 @@ async function loadDataFromRender() {
             
             investorsData = Array.from(investorsMap.values());
             console.log(`Загружено ${investorsData.length} инвесторов через Render API`);
+            
+            // Добавляем видимую отладку
+            const debugDiv = document.createElement('div');
+            debugDiv.innerHTML = `<p style="color: blue; font-weight: bold;">DEBUG: Data loaded! ${investorsData.length} investors</p>`;
+            debugDiv.style.position = 'fixed';
+            debugDiv.style.top = '150px';
+            debugDiv.style.right = '10px';
+            debugDiv.style.zIndex = '9999';
+            debugDiv.style.background = 'lightblue';
+            debugDiv.style.padding = '10px';
+            debugDiv.style.border = '2px solid blue';
+            document.body.appendChild(debugDiv);
+            
             return investorsData;
         } else {
             throw new Error('Неверный формат данных от API');

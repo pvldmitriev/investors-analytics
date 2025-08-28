@@ -25,6 +25,18 @@ class InvestorsApp {
             const investors = await loadDataFromRender();
             console.log('=== DEBUG: loadDataFromRender() завершен, investors:', investors ? investors.length : 'null');
             
+            // Добавляем видимую отладку
+            const debugDiv = document.createElement('div');
+            debugDiv.innerHTML = `<p style="color: purple; font-weight: bold;">DEBUG: App received ${investors ? investors.length : 'null'} investors</p>`;
+            debugDiv.style.position = 'fixed';
+            debugDiv.style.top = '200px';
+            debugDiv.style.right = '10px';
+            debugDiv.style.zIndex = '9999';
+            debugDiv.style.background = 'plum';
+            debugDiv.style.padding = '10px';
+            debugDiv.style.border = '2px solid purple';
+            document.body.appendChild(debugDiv);
+            
             if (investors && investors.length > 0) {
                 investorsData = investors;
                 filteredData = [...investorsData];
