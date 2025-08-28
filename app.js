@@ -49,7 +49,24 @@ class InvestorsApp {
             
             this.setupEventListeners();
             this.applyFilters();
-            setTimeout(() => { this.updateDashboard(); }, 100);
+            
+            // Добавляем отладку для updateDashboard
+            console.log('=== DEBUG: Calling updateDashboard() ===');
+            const debugDiv = document.createElement('div');
+            debugDiv.innerHTML = `<p style="color: orange; font-weight: bold;">DEBUG: Calling updateDashboard()</p>`;
+            debugDiv.style.position = 'fixed';
+            debugDiv.style.top = '250px';
+            debugDiv.style.right = '10px';
+            debugDiv.style.zIndex = '9999';
+            debugDiv.style.background = 'orange';
+            debugDiv.style.padding = '10px';
+            debugDiv.style.border = '2px solid darkorange';
+            document.body.appendChild(debugDiv);
+            
+            setTimeout(() => { 
+                console.log('=== DEBUG: updateDashboard timeout fired ===');
+                this.updateDashboard(); 
+            }, 100);
             
         } catch (error) {
             console.error('Ошибка инициализации:', error);
@@ -164,13 +181,38 @@ class InvestorsApp {
         const pageData = filteredData.slice(startIndex, endIndex);
 
         // Обновляем контейнер
-        const container = document.getElementById('investorsContainer');
+        const container = document.getElementById('investorsList');
         if (container) {
             container.innerHTML = '';
             pageData.forEach(investor => {
                 const card = createInvestorCardRender(investor);
                 container.appendChild(card);
             });
+            
+            // Добавляем отладку
+            console.log('=== DEBUG: Container updated with', pageData.length, 'investors ===');
+            const debugDiv = document.createElement('div');
+            debugDiv.innerHTML = `<p style="color: green; font-weight: bold;">DEBUG: Container updated! ${pageData.length} investors displayed</p>`;
+            debugDiv.style.position = 'fixed';
+            debugDiv.style.top = '300px';
+            debugDiv.style.right = '10px';
+            debugDiv.style.zIndex = '9999';
+            debugDiv.style.background = 'lightgreen';
+            debugDiv.style.padding = '10px';
+            debugDiv.style.border = '2px solid green';
+            document.body.appendChild(debugDiv);
+        } else {
+            console.error('=== DEBUG: Container investorsList not found ===');
+            const debugDiv = document.createElement('div');
+            debugDiv.innerHTML = `<p style="color: red; font-weight: bold;">ERROR: Container investorsList not found!</p>`;
+            debugDiv.style.position = 'fixed';
+            debugDiv.style.top = '300px';
+            debugDiv.style.right = '10px';
+            debugDiv.style.zIndex = '9999';
+            debugDiv.style.background = 'lightcoral';
+            debugDiv.style.padding = '10px';
+            debugDiv.style.border = '2px solid red';
+            document.body.appendChild(debugDiv);
         }
 
         // Обновляем статистику
@@ -211,14 +253,14 @@ class InvestorsApp {
     }
 
     showLoading(message) {
-        const container = document.getElementById('investorsContainer');
+        const container = document.getElementById('investorsList');
         if (container) {
             container.innerHTML = `<div class="loading">${message}</div>`;
         }
     }
 
     showError(message) {
-        const container = document.getElementById('investorsContainer');
+        const container = document.getElementById('investorsList');
         if (container) {
             container.innerHTML = `<div class="error">${message}</div>`;
         }
