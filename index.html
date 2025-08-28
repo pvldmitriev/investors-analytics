@@ -385,6 +385,17 @@
         console.log('=== TEST: HTML loaded, JavaScript is working ===');
         document.addEventListener('DOMContentLoaded', function() {
             console.log('=== TEST: DOMContentLoaded fired ===');
+            // Add a visible test to the page
+            const testDiv = document.createElement('div');
+            testDiv.innerHTML = '<p style="color: red; font-weight: bold;">JAVASCRIPT TEST: DOMContentLoaded fired successfully!</p>';
+            testDiv.style.position = 'fixed';
+            testDiv.style.top = '10px';
+            testDiv.style.right = '10px';
+            testDiv.style.zIndex = '9999';
+            testDiv.style.background = 'yellow';
+            testDiv.style.padding = '10px';
+            testDiv.style.border = '2px solid red';
+            document.body.appendChild(testDiv);
         });
     </script>
     <script src="data.js?v=8"></script>
