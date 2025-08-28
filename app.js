@@ -13,7 +13,7 @@ class InvestorsApp {
     async init() {
         try {
             this.showLoading('Загрузка данных...');
-            console.log('Загружаем данные с Render API...');
+            console.log('Загружаем данные через Render API...');
             
             const investors = await loadDataFromRender();
             

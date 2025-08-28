@@ -4,11 +4,11 @@ let filteredData = [];
 let currentPage = 1;
 const recordsPerPage = 100;
 
-// Загрузка данных с Render API
+// Загрузка данных через Render API
 async function loadDataFromRender() {
     try {
-        console.log('Загружаем данные с Render API...');
-        const response = await fetch('/api/investors');
+        console.log('Загружаем данные через Render API...');
+        const response = await fetch('https://investors-app.onrender.com/api/investors');
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -65,21 +65,21 @@ async function loadDataFromRender() {
             });
             
             investorsData = Array.from(investorsMap.values());
-            console.log(`Загружено ${investorsData.length} инвесторов с Render API`);
+            console.log(`Загружено ${investorsData.length} инвесторов через Render API`);
             return investorsData;
         } else {
             throw new Error('Неверный формат данных от API');
         }
     } catch (error) {
-        console.error('Ошибка загрузки данных с Render API:', error);
+        console.error('Ошибка загрузки данных через Render API:', error);
         throw error;
     }
 }
 
-// Сохранение прогресса в Render API
+// Сохранение прогресса через Render API
 async function saveProgressToRender(investorId, ownerName, stage, isActive) {
     try {
-        const response = await fetch('/api/progress', {
+        const response = await fetch('https://investors-app.onrender.com/api/progress', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -109,10 +109,10 @@ async function saveProgressToRender(investorId, ownerName, stage, isActive) {
     }
 }
 
-// Сохранение заметки в Render API
+// Сохранение заметки через Vercel API
 async function saveNoteToRender(investorId, noteText) {
     try {
-        const response = await fetch('/api/notes', {
+        const response = await fetch('https://investors-app.onrender.com/api/notes', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -140,10 +140,10 @@ async function saveNoteToRender(investorId, noteText) {
     }
 }
 
-// Логирование действий в Render API
+// Логирование действий через Vercel API
 async function logActionToRender(actionType, actionData) {
     try {
-        const response = await fetch('/api/logs', {
+        const response = await fetch('https://investors-app.onrender.com/api/logs', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -158,7 +158,7 @@ async function logActionToRender(actionType, actionData) {
             console.warn('Ошибка логирования:', response.status);
         }
     } catch (error) {
-        console.warn('Ошибка логирования в Render API:', error);
+        console.warn('Ошибка логирования через Vercel API:', error);
     }
 }
 
@@ -296,7 +296,7 @@ async function toggleOwner(investorId, ownerName, isChecked) {
             });
         } else {
             // Если чекбокс выключен, очищаем прогресс
-            await saveProgressToRender(investorId, ownerName, null, false);
+            await saveProgressToVercel(investorId, ownerName, null, false);
         }
         
         // Обновляем отображение
@@ -318,7 +318,7 @@ async function setStage(investorId, ownerName, stage) {
         if (!investor) return;
         
         // Обновляем прогресс
-        await saveProgressToRender(investorId, ownerName, stage, true);
+        await saveProgressToVercel(investorId, ownerName, stage, true);
         
         // Обновляем данные в памяти
         investor.owner_progress = investor.owner_progress.filter(p => p.owner_name !== ownerName);

@@ -2,6 +2,7 @@ const express = require('express');
 const { Pool } = require('pg');
 const path = require('path');
 const fs = require('fs');
+const cors = require('cors');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,6 +14,7 @@ const pool = new Pool({
 });
 
 // Middleware
+app.use(cors());
 app.use(express.json());
 app.use(express.static('.'));
 
@@ -266,6 +268,24 @@ app.get('/api/logs', async (req, res) => {
         res.json({ success: true, data: result.rows });
     } catch (error) {
         console.error('Ошибка получения логов:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.post('/api/logs', async (req, res) => {
+    try {
+        const { action_type, action_data } = req.body;
+        const client = await pool.connect();
+        
+        await client.query(
+            'INSERT INTO logs (action_type, action_data) VALUES ($1, $2)',
+            [action_type, JSON.stringify(action_data)]
+        );
+        
+        client.release();
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Ошибка сохранения лога:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
