@@ -11,8 +11,14 @@ async function loadDataFromRender() {
         console.log('Загружаем данные через Render API...');
         
         console.log('=== DEBUG: Начинаем fetch запрос ===');
-        const response = await fetch('https://investors-app.onrender.com/api/investors');
-        console.log('=== DEBUG: fetch завершен, status:', response.status, 'ok:', response.ok);
+        let response;
+        try {
+            response = await fetch('https://investors-app.onrender.com/api/investors');
+            console.log('=== DEBUG: fetch завершен, status:', response.status, 'ok:', response.ok);
+        } catch (fetchError) {
+            console.error('=== DEBUG: Fetch error:', fetchError);
+            throw fetchError;
+        }
         console.log('=== DEBUG: response headers:', response.headers);
         
         if (!response.ok) {
