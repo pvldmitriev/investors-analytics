@@ -279,26 +279,98 @@ class InvestorsApp {
     }
 }
 
-// Инициализация приложения
-// Ждем полной загрузки всех скриптов
-window.addEventListener('load', () => {
-    console.log('=== DEBUG: Window load event fired ===');
-    try {
-        const app = new InvestorsApp();
-        console.log('=== DEBUG: InvestorsApp created ===');
-        app.init();
-    } catch (error) {
-        console.error('=== DEBUG: Error creating app:', error);
-        // Добавляем видимую ошибку на страницу
-        const errorDiv = document.createElement('div');
-        errorDiv.innerHTML = `<p style="color: red; font-weight: bold;">ERROR: ${error.message}</p>`;
-        errorDiv.style.position = 'fixed';
-        errorDiv.style.top = '100px';
-        errorDiv.style.right = '10px';
-        errorDiv.style.zIndex = '9999';
-        errorDiv.style.background = 'lightcoral';
-        errorDiv.style.padding = '10px';
-        errorDiv.style.border = '2px solid red';
-        document.body.appendChild(errorDiv);
+// Современная архитектура инициализации приложения
+(function() {
+    'use strict';
+    
+    // Состояние готовности приложения
+    let appReady = false;
+    let dependenciesReady = false;
+    
+    // Проверка готовности зависимостей
+    function checkDependencies() {
+        if (typeof loadDataFromRender === 'function' && 
+            typeof createInvestorCardRender === 'function' &&
+            typeof investorsData !== 'undefined') {
+            dependenciesReady = true;
+            console.log('=== DEBUG: All dependencies ready ===');
+            return true;
+        }
+        return false;
     }
-});
+    
+    // Инициализация приложения
+    function initializeApp() {
+        if (appReady || !dependenciesReady) return;
+        
+        console.log('=== DEBUG: Initializing application ===');
+        try {
+            const app = new InvestorsApp();
+            console.log('=== DEBUG: InvestorsApp created ===');
+            app.init();
+            appReady = true;
+            
+            // Добавляем видимую отладку успеха
+            const successDiv = document.createElement('div');
+            successDiv.innerHTML = `<p style="color: green; font-weight: bold;">SUCCESS: App initialized successfully!</p>`;
+            successDiv.style.position = 'fixed';
+            successDiv.style.top = '350px';
+            successDiv.style.right = '10px';
+            successDiv.style.zIndex = '9999';
+            successDiv.style.background = 'lightgreen';
+            successDiv.style.padding = '10px';
+            successDiv.style.border = '2px solid green';
+            document.body.appendChild(successDiv);
+            
+        } catch (error) {
+            console.error('=== DEBUG: Error initializing app:', error);
+            const errorDiv = document.createElement('div');
+            errorDiv.innerHTML = `<p style="color: red; font-weight: bold;">ERROR: ${error.message}</p>`;
+            errorDiv.style.position = 'fixed';
+            errorDiv.style.top = '100px';
+            errorDiv.style.right = '10px';
+            errorDiv.style.zIndex = '9999';
+            errorDiv.style.background = 'lightcoral';
+            errorDiv.style.padding = '10px';
+            errorDiv.style.border = '2px solid red';
+            document.body.appendChild(errorDiv);
+        }
+    }
+    
+    // Проверка готовности DOM
+    function domReady() {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', domReady);
+        } else {
+            console.log('=== DEBUG: DOM ready ===');
+            // Начинаем проверку зависимостей
+            const checkInterval = setInterval(() => {
+                if (checkDependencies()) {
+                    clearInterval(checkInterval);
+                    initializeApp();
+                }
+            }, 100);
+            
+            // Таймаут на случай, если зависимости не загрузятся
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                if (!dependenciesReady) {
+                    console.error('=== DEBUG: Dependencies timeout ===');
+                    const timeoutDiv = document.createElement('div');
+                    timeoutDiv.innerHTML = `<p style="color: orange; font-weight: bold;">TIMEOUT: Dependencies not loaded</p>`;
+                    timeoutDiv.style.position = 'fixed';
+                    timeoutDiv.style.top = '400px';
+                    timeoutDiv.style.right = '10px';
+                    timeoutDiv.style.zIndex = '9999';
+                    timeoutDiv.style.background = 'orange';
+                    timeoutDiv.style.padding = '10px';
+                    timeoutDiv.style.border = '2px solid darkorange';
+                    document.body.appendChild(timeoutDiv);
+                }
+            }, 10000);
+        }
+    }
+    
+    // Запуск процесса инициализации
+    domReady();
+})();

@@ -1,8 +1,15 @@
-// Глобальные переменные
-let investorsData = [];
-let filteredData = [];
-let currentPage = 1;
-const recordsPerPage = 100;
+// Модульная архитектура данных
+(function() {
+    'use strict';
+    
+    // Глобальные переменные
+    window.investorsData = [];
+    window.filteredData = [];
+    window.currentPage = 1;
+    window.recordsPerPage = 100;
+    
+    console.log('=== DEBUG: Data module loaded ===');
+})();
 
 // Загрузка данных через Render API
 async function loadDataFromRender() {
@@ -348,7 +355,7 @@ async function toggleOwner(investorId, ownerName, isChecked) {
             });
         } else {
             // Если чекбокс выключен, очищаем прогресс
-            await saveProgressToVercel(investorId, ownerName, null, false);
+            await saveProgressToRender(investorId, ownerName, null, false);
         }
         
         // Обновляем отображение
@@ -370,7 +377,7 @@ async function setStage(investorId, ownerName, stage) {
         if (!investor) return;
         
         // Обновляем прогресс
-        await saveProgressToVercel(investorId, ownerName, stage, true);
+        await saveProgressToRender(investorId, ownerName, stage, true);
         
         // Обновляем данные в памяти
         investor.owner_progress = investor.owner_progress.filter(p => p.owner_name !== ownerName);
@@ -420,13 +427,20 @@ function getStageTitle(stage) {
 }
 
 // Экспорт функций в глобальную область
-window.loadDataFromRender = loadDataFromRender;
-window.saveProgressToRender = saveProgressToRender;
-window.saveNoteToRender = saveNoteToRender;
-window.logActionToRender = logActionToRender;
-window.createInvestorCardRender = createInvestorCardRender;
-window.showNotesModalRender = showNotesModalRender;
-window.saveNoteRender = saveNoteRender;
-window.toggleOwner = toggleOwner;
-window.setStage = setStage;
-window.updateInvestorCard = updateInvestorCard;
+(function() {
+    'use strict';
+    
+    // Экспорт функций в глобальную область видимости
+    window.loadDataFromRender = loadDataFromRender;
+    window.saveProgressToRender = saveProgressToRender;
+    window.saveNoteToRender = saveNoteToRender;
+    window.logActionToRender = logActionToRender;
+    window.createInvestorCardRender = createInvestorCardRender;
+    window.showNotesModalRender = showNotesModalRender;
+    window.saveNoteRender = saveNoteRender;
+    window.toggleOwner = toggleOwner;
+    window.setStage = setStage;
+    window.updateInvestorCard = updateInvestorCard;
+    
+    console.log('=== DEBUG: All functions exported to global scope ===');
+})();
