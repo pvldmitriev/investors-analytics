@@ -42,6 +42,9 @@ async function initDatabase() {
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
                 updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
             );
+            
+            -- Добавляем уникальный индекс на name, если его нет
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_investors_name_unique ON investors(name);
 
             -- Создание таблицы прогресса по владельцам
             CREATE TABLE IF NOT EXISTS owner_progress (
@@ -88,10 +91,11 @@ async function initDatabase() {
 
         // Проверяем, есть ли данные в таблице investors
         const { rows } = await client.query('SELECT COUNT(*) FROM investors');
-        if (parseInt(rows[0].count) === 0) {
-            console.log('📊 Загружаем данные инвесторов...');
-            await loadInvestorData(client);
-        }
+        console.log(`📊 Текущее количество записей в БД: ${rows[0].count}`);
+        
+        // Принудительно загружаем данные (временно для отладки)
+        console.log('📊 Загружаем данные инвесторов...');
+        await loadInvestorData(client);
 
         client.release();
     } catch (error) {
@@ -103,6 +107,8 @@ async function initDatabase() {
 async function loadInvestorData(client) {
     try {
         const dataPath = path.join(__dirname, 'results', 'evaluated_profiles.ru_kz_by_full.json');
+        console.log(`🔍 Проверяем файл данных: ${dataPath}`);
+        
         if (!fs.existsSync(dataPath)) {
             console.log('⚠️ Файл данных не найден, пропускаем загрузку');
             return;
@@ -111,28 +117,53 @@ async function loadInvestorData(client) {
         const rawData = fs.readFileSync(dataPath, 'utf8');
         const investors = JSON.parse(rawData);
 
-        console.log(`📈 Загружаем ${investors.length} инвесторов...`);
+        console.log(`📈 Найдено ${investors.length} инвесторов в файле`);
 
-        for (const investor of investors) {
-            const query = `
-                INSERT INTO investors (name, title, company, linkedin_url, description, rating)
-                VALUES ($1, $2, $3, $4, $5, $6)
-                ON CONFLICT (name) DO NOTHING
-            `;
-            
-            await client.query(query, [
-                `${investor['First Name'] || ''} ${investor['Last Name'] || ''}`.trim(),
-                investor['Current Title'] || '',
-                investor['Current Company'] || '',
-                investor['LinkedIn URL'] || '',
-                investor['Quotes'] || '',
-                investor['investor_score'] || 0
-            ]);
+        let insertedCount = 0;
+        let skippedCount = 0;
+
+        for (let i = 0; i < investors.length; i++) {
+            const investor = investors[i];
+            try {
+                const name = `${investor['First Name'] || ''} ${investor['Last Name'] || ''}`.trim();
+                const title = investor['Current Title'] || '';
+                const company = investor['Current Company'] || '';
+                const linkedin_url = investor['LinkedIn URL'] || '';
+                const description = investor['Quotes'] || '';
+                const rating = investor['investor_score'] || 0;
+
+                const query = `
+                    INSERT INTO investors (name, title, company, linkedin_url, description, rating)
+                    VALUES ($1, $2, $3, $4, $5, $6)
+                    ON CONFLICT (name) DO NOTHING
+                `;
+                
+                const result = await client.query(query, [name, title, company, linkedin_url, description, rating]);
+                
+                if (result.rowCount > 0) {
+                    insertedCount++;
+                } else {
+                    skippedCount++;
+                }
+
+                // Логируем прогресс каждые 100 записей
+                if ((i + 1) % 100 === 0) {
+                    console.log(`📊 Прогресс: ${i + 1}/${investors.length} (${insertedCount} добавлено, ${skippedCount} пропущено)`);
+                }
+            } catch (error) {
+                console.error(`❌ Ошибка при обработке инвестора ${i + 1}:`, error);
+            }
         }
 
-        console.log('✅ Данные инвесторов загружены');
+        console.log(`✅ Загрузка завершена: ${insertedCount} добавлено, ${skippedCount} пропущено`);
+        
+        // Проверяем итоговое количество
+        const { rows } = await client.query('SELECT COUNT(*) FROM investors');
+        console.log(`📊 Всего записей в БД: ${rows[0].count}`);
+        
     } catch (error) {
         console.error('❌ Ошибка загрузки данных:', error);
+        throw error; // Пробрасываем ошибку дальше
     }
 }
 
@@ -235,6 +266,111 @@ app.get('/api/logs', async (req, res) => {
         res.json({ success: true, data: result.rows });
     } catch (error) {
         console.error('Ошибка получения логов:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// API endpoint для загрузки данных
+app.post('/api/load-data', async (req, res) => {
+    try {
+        const client = await pool.connect();
+        
+        // Проверяем, есть ли данные
+        const { rows } = await client.query('SELECT COUNT(*) FROM investors');
+        console.log(`📊 Текущее количество записей в БД: ${rows[0].count}`);
+        
+        if (parseInt(rows[0].count) > 0) {
+            client.release();
+            return res.status(200).json({ success: true, message: 'Данные уже загружены', count: rows[0].count });
+        }
+        
+        // Загружаем данные из файла
+        const dataPath = path.join(__dirname, 'results', 'evaluated_profiles.ru_kz_by_full.json');
+        console.log(`🔍 Проверяем файл данных: ${dataPath}`);
+        
+        if (!fs.existsSync(dataPath)) {
+            client.release();
+            return res.status(404).json({ success: false, error: 'Файл данных не найден' });
+        }
+        
+        const rawData = fs.readFileSync(dataPath, 'utf8');
+        const investors = JSON.parse(rawData);
+        console.log(`📈 Найдено ${investors.length} инвесторов в файле`);
+
+        let insertedCount = 0;
+        let skippedCount = 0;
+
+        for (let i = 0; i < investors.length; i++) {
+            const investor = investors[i];
+            try {
+                const name = `${investor['First Name'] || ''} ${investor['Last Name'] || ''}`.trim();
+                const title = investor['Current Title'] || '';
+                const company = investor['Current Company'] || '';
+                const linkedin_url = investor['LinkedIn URL'] || '';
+                const description = investor['Quotes'] || '';
+                const rating = investor['investor_score'] || 0;
+
+                const query = `
+                    INSERT INTO investors (name, title, company, linkedin_url, description, rating)
+                    VALUES ($1, $2, $3, $4, $5, $6)
+                    ON CONFLICT (name) DO NOTHING
+                `;
+                
+                const result = await client.query(query, [name, title, company, linkedin_url, description, rating]);
+                
+                if (result.rowCount > 0) {
+                    insertedCount++;
+                } else {
+                    skippedCount++;
+                }
+            } catch (error) {
+                console.error(`❌ Ошибка при обработке инвестора ${i + 1}:`, error);
+            }
+        }
+
+        console.log(`✅ Загрузка завершена: ${insertedCount} добавлено, ${skippedCount} пропущено`);
+        
+        // Проверяем итоговое количество
+        const { rows: finalRows } = await client.query('SELECT COUNT(*) FROM investors');
+        console.log(`📊 Всего записей в БД: ${finalRows[0].count}`);
+        
+        client.release();
+        res.status(200).json({ 
+            success: true, 
+            message: 'Данные загружены успешно',
+            inserted: insertedCount,
+            skipped: skippedCount,
+            total: finalRows[0].count
+        });
+    } catch (error) {
+        console.error('❌ Ошибка загрузки данных:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Тестовый эндпоинт для проверки файлов
+app.get('/api/debug', async (req, res) => {
+    try {
+        const dataPath = path.join(__dirname, 'results', 'evaluated_profiles.ru_kz_by_full.json');
+        const fileExists = fs.existsSync(dataPath);
+        const fileSize = fileExists ? fs.statSync(dataPath).size : 0;
+        
+        const client = await pool.connect();
+        const { rows } = await client.query('SELECT COUNT(*) FROM investors');
+        client.release();
+        
+        res.json({
+            success: true,
+            debug: {
+                fileExists,
+                filePath: dataPath,
+                fileSize,
+                currentDir: __dirname,
+                filesInResults: fs.readdirSync(path.join(__dirname, 'results')),
+                investorsCount: parseInt(rows[0].count)
+            }
+        });
+    } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
 });
