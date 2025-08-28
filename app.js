@@ -12,10 +12,13 @@ class InvestorsApp {
 
     async init() {
         try {
+            console.log('=== DEBUG: InvestorsApp.init() вызван ===');
             this.showLoading('Загрузка данных...');
             console.log('Загружаем данные через Render API...');
             
+            console.log('=== DEBUG: Вызываем loadDataFromRender() ===');
             const investors = await loadDataFromRender();
+            console.log('=== DEBUG: loadDataFromRender() завершен, investors:', investors ? investors.length : 'null');
             
             if (investors && investors.length > 0) {
                 investorsData = investors;

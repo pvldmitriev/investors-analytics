@@ -7,14 +7,18 @@ const recordsPerPage = 100;
 // Загрузка данных через Render API
 async function loadDataFromRender() {
     try {
+        console.log('=== DEBUG: loadDataFromRender вызвана ===');
         console.log('Загружаем данные через Render API...');
+        
         const response = await fetch('https://investors-app.onrender.com/api/investors');
+        console.log('=== DEBUG: fetch завершен, status:', response.status, 'ok:', response.ok);
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const result = await response.json();
+        console.log('=== DEBUG: JSON получен, success:', result.success, 'data length:', result.data ? result.data.length : 'null');
         
         if (result.success && result.data) {
             // Группируем данные по инвесторам
