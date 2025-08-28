@@ -10,8 +10,10 @@ async function loadDataFromRender() {
         console.log('=== DEBUG: loadDataFromRender вызвана ===');
         console.log('Загружаем данные через Render API...');
         
+        console.log('=== DEBUG: Начинаем fetch запрос ===');
         const response = await fetch('https://investors-app.onrender.com/api/investors');
         console.log('=== DEBUG: fetch завершен, status:', response.status, 'ok:', response.ok);
+        console.log('=== DEBUG: response headers:', response.headers);
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -75,7 +77,10 @@ async function loadDataFromRender() {
             throw new Error('Неверный формат данных от API');
         }
     } catch (error) {
-        console.error('Ошибка загрузки данных через Render API:', error);
+        console.error('=== DEBUG: Ошибка загрузки данных через Render API ===');
+        console.error('Error type:', error.constructor.name);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
         throw error;
     }
 }
