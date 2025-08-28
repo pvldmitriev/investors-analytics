@@ -16,6 +16,11 @@ class InvestorsApp {
             this.showLoading('Загрузка данных...');
             console.log('Загружаем данные через Render API...');
             
+            // Проверяем, что функция доступна
+            if (typeof loadDataFromRender !== 'function') {
+                throw new Error('loadDataFromRender function not found');
+            }
+            
             console.log('=== DEBUG: Вызываем loadDataFromRender() ===');
             const investors = await loadDataFromRender();
             console.log('=== DEBUG: loadDataFromRender() завершен, investors:', investors ? investors.length : 'null');
@@ -221,7 +226,25 @@ class InvestorsApp {
 }
 
 // Инициализация приложения
-document.addEventListener('DOMContentLoaded', () => {
-    const app = new InvestorsApp();
-    app.init();
+// Ждем полной загрузки всех скриптов
+window.addEventListener('load', () => {
+    console.log('=== DEBUG: Window load event fired ===');
+    try {
+        const app = new InvestorsApp();
+        console.log('=== DEBUG: InvestorsApp created ===');
+        app.init();
+    } catch (error) {
+        console.error('=== DEBUG: Error creating app:', error);
+        // Добавляем видимую ошибку на страницу
+        const errorDiv = document.createElement('div');
+        errorDiv.innerHTML = `<p style="color: red; font-weight: bold;">ERROR: ${error.message}</p>`;
+        errorDiv.style.position = 'fixed';
+        errorDiv.style.top = '100px';
+        errorDiv.style.right = '10px';
+        errorDiv.style.zIndex = '9999';
+        errorDiv.style.background = 'lightcoral';
+        errorDiv.style.padding = '10px';
+        errorDiv.style.border = '2px solid red';
+        document.body.appendChild(errorDiv);
+    }
 });
