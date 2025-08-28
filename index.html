@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Анализ Инвесторов - Профильная Аналитика</title>
+    <!-- Временно отключена защита паролем -->
+    <!-- <script>document.documentElement.classList.add('auth-locked');</script> -->
+    <!-- <script src="auth.js"></script> -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --light-bg: #ecf0f1;
+            --dark-text: #2c3e50;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fb;
+            min-height: 100vh;
+            color: #1f2937;
+        }
+
+        .navbar {
+            background: #ffffff !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+
+        .hero-section {
+            background: #ffffff;
+            border-radius: 16px;
+            margin: 20px 0;
+            padding: 28px;
+            text-align: center;
+            color: #111827;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+        }
+
+        .stats-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 10px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .investor-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 18px;
+            margin: 12px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .investor-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .filter-section {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        }
+
+        .score-badge {
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-weight: 600;
+            font-size: 0.85em;
+            color: #fff;
+        }
+
+        .score-high { background: #16a34a; }
+        .score-medium { background: #f59e0b; }
+        .score-low { background: #ef4444; }
+
+        .profile-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #3b82f6, #2563eb);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.25em;
+            font-weight: 700;
+            margin-right: 14px;
+        }
+
+        .chart-container {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 20px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            height: 250px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .chart-container canvas {
+            max-height: 200px !important;
+            max-width: 100% !important;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            padding-left: 45px;
+            border-radius: 25px;
+            border: 2px solid #e0e0e0;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-box input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: white;
+        }
+
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+            border-width: 0.3em;
+        }
+
+        .modal-content {
+            border-radius: 15px;
+            border: none;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            color: white;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .profile-detail {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .progress-custom {
+            height: 8px;
+            border-radius: 4px;
+            background: #e9ecef;
+        }
+
+        .progress-bar-custom {
+            border-radius: 4px;
+            background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+        }
+    </style>
+</head>
+<body>
+    <!-- Навигация -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">
+                <i class="fas fa-chart-line me-2"></i>Анализ Инвесторов
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#dashboard"><i class="fas fa-tachometer-alt me-1"></i>Дашборд</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#investors"><i class="fas fa-users me-1"></i>Инвесторы</a>
+                    </li>
+                    <li class="nav-item ms-2">
+                        <button id="cardModeBtn" class="btn btn-sm btn-outline-secondary" title="Переключить режим карточек">
+                            Режим: Полный
+                        </button>
+                    </li>
+
+
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Главный контент -->
+    <div class="container" style="margin-top: 80px;">
+        <!-- Заголовок и вкладки -->
+        <div class="hero-section">
+            <h1 class="display-6 fw-bold mb-0">Профильная аналитика</h1>
+            <p class="text-muted mt-2 mb-0">Обработанные данные инвесторов (RU/KZ/BY)</p>
+        </div>
+
+        <!-- Дашборд -->
+        <div id="dashboard" class="mb-4">
+            <div class="row g-3">
+                <div class="col-12 col-md-4 col-lg-2">
+                    <div class="stats-card text-center">
+                        <div class="text-muted">Всего инвесторов</div>
+                        <div class="h3 mb-0" id="statTotal">—</div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4 col-lg-2">
+                    <div class="stats-card text-center">
+                        <div class="text-muted">С LinkedIn</div>
+                        <div class="h3 mb-0" id="statWithLinkedin">—</div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4 col-lg-2">
+                    <div class="stats-card text-center">
+                        <div class="text-muted">Нефтегаз</div>
+                        <div class="h3 mb-0" id="statOilGas">—</div>
+                        <div class="small text-muted" id="statOilGasShare">—</div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4 col-lg-2">
+                    <div class="stats-card text-center">
+                        <div class="text-muted">Ангелы / VC</div>
+                        <div class="h3 mb-0" id="statAngels">—</div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4 col-lg-2">
+                    <div class="stats-card text-center">
+                        <div class="text-muted">Corp M&A</div>
+                        <div class="h3 mb-0" id="statCorpMA">—</div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4 col-lg-2">
+                    <div class="stats-card text-center">
+                        <div class="text-muted">Инвест. рейтинг 80+</div>
+                        <div class="h3 mb-0" id="statHighScore">—</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-3 d-flex gap-2">
+            <button id="tabInvestors" class="btn btn-primary">Инвесторы</button>
+            <button id="tabConnectors" class="btn btn-outline-primary">Коннекторы</button>
+        </div>
+
+        <!-- Фильтры -->
+        <div class="filter-section">
+            <h4 class="mb-4"><i class="fas fa-filter me-2"></i>Фильтры и Поиск</h4>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Поиск по имени, компании, должности...">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <select class="form-select" id="sortFilter">
+                        <option value="utility_score">По рейтингу</option>
+                        <option value="name">По имени</option>
+                        <option value="company">По компании</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-secondary w-100" onclick="toggleSortOrder()" id="sortOrderBtn" title="Порядок сортировки">
+                        <i class="fas fa-sort-amount-down"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <select class="form-select" id="archetypeFilter">
+                        <option value="">Все архетипы</option>
+                        <optgroup label="Инвесторы">
+                            <option value="Ангел/VC">Ангел/VC</option>
+                            <option value="Корпоративный M&A">Корпоративный M&A</option>
+                            <option value="Основатель/CEO">Основатель/CEO</option>
+                            <option value="Технический специалист">Технический специалист</option>
+                            <option value="Топ-менеджер нефтегаза/горнодобычи">Топ-менеджер нефтегаза/горнодобычи</option>
+                        </optgroup>
+                        <optgroup label="Коннекторы">
+                            <option value="Отраслевой консультант">Отраслевой консультант</option>
+                            <option value="банкир">Инвестиционный банкир / M&A консультант</option>
+                            <option value="юридическ">Партнер юридической/аудиторской фирмы</option>
+                            <option value="Основатель смежного технологического стартапа">Основатель смежного технологического стартапа</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="ownerFilter">
+                        <option value="">Все владельцы</option>
+                        <option value="anton">Антон</option>
+                        <option value="pavel">Павел</option>
+                        <option value="both">Антон и Павел</option>
+                        <option value="none">Никто</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button" id="stageFilterBtn" data-bs-toggle="dropdown" aria-expanded="false">
+                            Все этапы
+                        </button>
+                        <ul class="dropdown-menu w-100" id="stageFilterDropdown">
+                            <li><label class="dropdown-item"><input type="checkbox" value="INV" class="stage-checkbox me-2">Инвайт отправлен</label></li>
+                            <li><label class="dropdown-item"><input type="checkbox" value="ACC" class="stage-checkbox me-2">Инвайт принят</label></li>
+                            <li><label class="dropdown-item"><input type="checkbox" value="RESP-I" class="stage-checkbox me-2">Ответ на инвайт</label></li>
+                            <li><label class="dropdown-item"><input type="checkbox" value="MSG" class="stage-checkbox me-2">Отправлено первое сообщение</label></li>
+                            <li><label class="dropdown-item"><input type="checkbox" value="RESP-M" class="stage-checkbox me-2">Ответ на сообщение</label></li>
+                            <li><label class="dropdown-item"><input type="checkbox" value="INT" class="stage-checkbox me-2">Проявлен интерес</label></li>
+                            <li><label class="dropdown-item"><input type="checkbox" value="CALL" class="stage-checkbox me-2">Назначен созвон</label></li>
+                            <li><label class="dropdown-item"><input type="checkbox" value="NEXT" class="stage-checkbox me-2">Есть варианты, следующие шаги</label></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Список инвесторов -->
+        <div class="row" id="investors">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 id="listHeading"><i class="fas fa-users me-2"></i>Инвесторы</h4>
+                    <div id="resultsCount" class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        <span id="countText">Загрузка...</span>
+                    </div>
+                </div>
+                <div id="investorsList" class="loading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                    <p class="mt-2">Загрузка данных...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно с деталями -->
+    <div class="modal fade" id="investorModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Детали инвестора</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="modalBody">
+                    <!-- Содержимое будет загружено динамически -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="data.js?v=6"></script>
+    <script src="app.js?v=6"></script>
+</body>
+</html>
