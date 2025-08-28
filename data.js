@@ -11,12 +11,36 @@ async function loadDataFromRender() {
         console.log('Загружаем данные через Render API...');
         
         console.log('=== DEBUG: Начинаем fetch запрос ===');
+        
+        // Add visible test to page
+        const testDiv = document.createElement('div');
+        testDiv.innerHTML = '<p style="color: blue; font-weight: bold;">DEBUG: Starting API call...</p>';
+        testDiv.style.position = 'fixed';
+        testDiv.style.top = '50px';
+        testDiv.style.right = '10px';
+        testDiv.style.zIndex = '9999';
+        testDiv.style.background = 'lightblue';
+        testDiv.style.padding = '10px';
+        testDiv.style.border = '2px solid blue';
+        document.body.appendChild(testDiv);
+        
         let response;
         try {
             response = await fetch('https://investors-app.onrender.com/api/investors');
             console.log('=== DEBUG: fetch завершен, status:', response.status, 'ok:', response.ok);
+            
+            // Update test div
+            testDiv.innerHTML = `<p style="color: green; font-weight: bold;">DEBUG: API call successful! Status: ${response.status}</p>`;
+            testDiv.style.background = 'lightgreen';
+            testDiv.style.border = '2px solid green';
         } catch (fetchError) {
             console.error('=== DEBUG: Fetch error:', fetchError);
+            
+            // Update test div with error
+            testDiv.innerHTML = `<p style="color: red; font-weight: bold;">DEBUG: API call failed! Error: ${fetchError.message}</p>`;
+            testDiv.style.background = 'lightcoral';
+            testDiv.style.border = '2px solid red';
+            
             throw fetchError;
         }
         console.log('=== DEBUG: response headers:', response.headers);
